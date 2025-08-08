@@ -17,6 +17,7 @@ private:
   const size_t max_generations = 10000;
   const size_t num_rounds = 64;
   const double mut_prob = 0.01;
+  const double memory_cost = 0.1;
 
 public:
   size_t GetSize() const {
@@ -80,7 +81,9 @@ public:
       if (org_counts[opponent_id] == 0) continue; // Skip opponent strategies not in use.
       // Determine # of opponents; note that we should not compete with self.
       const size_t opponent_count = org_counts[opponent_id] - (strategy_id == opponent_id);
-      fitness += manager.Compete(strategy_id, opponent_id, num_rounds).GetScore1() * opponent_count;
+      const double base_fitness = manager.Compete(strategy_id, opponent_id, num_rounds).GetScore1();
+      const double penalty = GetStrategy(strategy_id).GetMemorySize() * memory_cost;
+      fitness +=  (base_fitness - penalty) * opponent_count;
     }
     return fitness;
   }
