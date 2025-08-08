@@ -18,6 +18,8 @@
 static constexpr bool COOPERATE = true;
 static constexpr bool DEFECT = false;
 
+static constexpr size_t MAX_MEM_SIZE = 10;
+
 constexpr size_t CountStrategies(size_t mem_bits) {
   emp_assert(mem_bits < 10, mem_bits);
   size_t result = 2;
@@ -86,8 +88,10 @@ public:
     decision_list.Import((strategy_id >> mem_bits) & emp::MaskLow(mem_bits+1), mem_bits+1);
   }
   SummaryStrategy(const SummaryStrategy &) = default;
+  SummaryStrategy(SummaryStrategy &&) = default;
 
   SummaryStrategy & operator=(const SummaryStrategy &) = default;
+  SummaryStrategy & operator=(SummaryStrategy &&) = default;
 
   [[nodiscard]] auto operator==(const SummaryStrategy & in) const {
     return start_state == in.start_state && decision_list == in.decision_list;
@@ -119,5 +123,49 @@ public:
     emp_assert(mem.size() == start_state.size());
     size_t num_opponent_defects = mem.CountZeros();
     return decision_list[num_opponent_defects];
+  }
+
+  SummaryStrategy Mutate(emp::Random & random) {
+    emp::BitVector new_start_state = start_state;
+    emp::BitVector new_decision_list = decision_list;
+
+    constexpr double mem_size_prob = 0.01;
+    constexpr double bit_flip_prob = 1.0 - mem_size_prob;
+
+    double mut_type_p = random.GetDouble();
+    // Check if we are changing memory size!
+    if (mut_type_p < mem_size_prob) {
+      if (mut_type_p < mem_size_prob / 2.0) { // Shrink!
+        if (new_start_state.size() > 0) {
+          new_start_state.PopBack();
+          new_decision_list.PopBack();
+        }
+      } else { // Grow!          
+        if (new_start_state.size() < MAX_MEM_SIZE) {
+          new_start_state.PushBack(random.P(0.5));
+          new_decision_list.PushBack(random.P(0.5));
+        }
+      }
+    }
+
+    // Otherwise, flip a bit!
+    else {
+      mut_type_p = (mut_type_p - mem_size_prob) / bit_flip_prob; // Renormalize
+      if (mut_type_p < 0.5) {  // Mutate start state.
+        const size_t num_bits = new_start_state.size();
+        size_t bit_id = num_bits * mut_type_p / 0.5;
+        if (bit_id < num_bits) { new_start_state.Toggle(bit_id); }
+      }
+      else {  // Mutate decision list.
+        const size_t num_bits = new_decision_list.size();
+        emp_assert(num_bits > 0);
+        mut_type_p -= 0.5;
+        size_t bit_id = num_bits * mut_type_p / 0.5;
+        new_decision_list.Toggle(bit_id);
+      }
+    }
+
+    emp::String new_name = emp::MakeString("mutant of ", GetName());
+    return SummaryStrategy{new_start_state, new_decision_list, new_name};
   }
 };

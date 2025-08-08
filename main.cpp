@@ -1,5 +1,3 @@
-// If 
-//
 // DEVELOPER NOTES:
 // - Strategies are assumed to have SOME memory; index 0 is used without checking.
 
@@ -12,8 +10,6 @@
 #include "Competition.hpp"
 #include "Population.hpp"
 #include "Strategy.hpp"
-
-constexpr size_t NUM_ROUNDS = 64;
 
 int main()
 {
@@ -36,13 +32,7 @@ int main()
   std::cout << "Start state:\n";
   pop.Print();
 
-  for (size_t update = 0; update < 10; ++update) {
-    pop.Update(random);
-    emp::PrintLn("Update ", update, ":");
-    std::cout << "End state:\n";
-    pop.Print();
-  }
-
+  pop.Run(random);
 
   // Competition comp{tit_for_tat, always_defect};
   // Competition comp{tit_for_tat, tit_for_tat};
