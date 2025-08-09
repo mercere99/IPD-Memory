@@ -6,6 +6,7 @@
 
 #include "Competition.hpp"
 #include "Strategy.hpp"
+#include "Logger.hpp"
 
 class Population {
 private:
@@ -18,6 +19,9 @@ private:
   const size_t num_rounds = 64;
   const double mut_prob = 0.01;
   const double memory_cost = 0.1;
+
+  const bool hard_defect_toggle = true;
+  const size_t hard_defect_round = 32;
 
 public:
   size_t GetSize() const {
@@ -81,7 +85,9 @@ public:
       if (org_counts[opponent_id] == 0) continue; // Skip opponent strategies not in use.
       // Determine # of opponents; note that we should not compete with self.
       const size_t opponent_count = org_counts[opponent_id] - (strategy_id == opponent_id);
-      const double base_fitness = manager.Compete(strategy_id, opponent_id, num_rounds).GetScore1();
+      const double base_fitness = manager
+                                  .Compete(strategy_id, opponent_id, num_rounds, hard_defect_toggle, hard_defect_round)
+                                  .GetScore1();
       const double penalty = GetStrategy(strategy_id).GetMemorySize() * memory_cost;
       fitness +=  (base_fitness - penalty) * opponent_count;
     }
@@ -101,7 +107,8 @@ public:
     // Choose who replicates and put them in a new population.
     const size_t pop_size = GetSize();
     emp::vector<size_t> next_counts(org_counts.size());
-    for (size_t i=0; i < pop_size; ++i) {  // New pop should be same size as old pop.
+    for (size_t i = 0; i < pop_size; ++i) {  // New pop should be same size as old pop.
+      // Select
       size_t id = index_map.Index(random.GetDouble(index_map.GetWeight()));
 
       // Mutate?
@@ -131,8 +138,6 @@ public:
   }
 
   void Print() const {
-    
-
     for (size_t strategy_id = 0; strategy_id < org_counts.size(); ++strategy_id) {
       if (org_counts[strategy_id] == 0) continue; // Skip strategies not in use.
       const SummaryStrategy & strategy = GetStrategy(strategy_id);
