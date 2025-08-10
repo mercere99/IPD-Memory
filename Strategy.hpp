@@ -7,6 +7,7 @@
 // 3 memory bits -> 7 bits total  -> 128 genomes   CUMULATIVE: 150
 // 4 memory bits -> 9 bits total  -> 512 genomes   CUMULATIVE: 662
 // 5 memory bits -> 11 bits total -> 2048 genomes  CUMULATIVE: 2710
+// Strategy IDs are cumulative. 
 
 #pragma once
 
@@ -21,7 +22,7 @@ static constexpr bool DEFECT = false;
 static constexpr size_t MAX_MEM_SIZE = 10;
 
 constexpr size_t CountStrategies(size_t mem_bits) {
-  emp_assert(mem_bits < 10, mem_bits);
+  emp_assert(mem_bits < MAX_MEM_SIZE, mem_bits);
   size_t result = 2;
   while (mem_bits > 0) {
     result *= 4;
@@ -39,7 +40,7 @@ constexpr size_t CalcFirstStrategyID(size_t mem_bits) {
   return total;
 }
 
-
+// Finds the actual memory size for a strategy
 constexpr size_t IDToMemoryBits(size_t strategy_id) {
   size_t mem_bits = 0;
   size_t num_strats = CountStrategies(0);
@@ -50,6 +51,7 @@ constexpr size_t IDToMemoryBits(size_t strategy_id) {
   return mem_bits;
 }
 
+// Finds the offset of a strategy within its memory size "group", or local ID
 constexpr size_t IDToMemoryDecisionList(size_t strategy_id) {
   size_t mem_bits = 0;
   size_t num_strats = CountStrategies(0);
@@ -79,7 +81,7 @@ public:
       strategy_id -= num_strats;
       num_strats = CountStrategies(++mem_bits);
     }
-
+    // strategy_id now contains the local ID
     emp_assert(strategy_id < CountStrategies(mem_bits));
     // first mem_bits is starting memory
     if (mem_bits > 0) start_state.Import(strategy_id & emp::MaskLow(mem_bits), mem_bits);

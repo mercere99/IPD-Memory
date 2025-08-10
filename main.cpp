@@ -32,7 +32,8 @@ int main()
   std::cout << "Start state:\n";
   pop.Print();
 
-  pop.Run(random);
+  // pop.Run(random);
+  pop.MultiRun();
 
   // Competition comp{tit_for_tat, always_defect};
   // Competition comp{tit_for_tat, tit_for_tat};

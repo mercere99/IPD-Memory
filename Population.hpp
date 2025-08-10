@@ -1,12 +1,29 @@
 #pragma once
 
+#include <fstream>
+#include <vector>
+
 #include "../Empirical/include/emp/base/vector.hpp"
 #include "../Empirical/include/emp/datastructs/UnorderedIndexMap.hpp"
 #include "../Empirical/include/emp/math/Random.hpp"
 
 #include "Competition.hpp"
 #include "Strategy.hpp"
-#include "Logger.hpp"
+
+struct GenerationStats {
+  // TODO: record strategy name (here or separately?), phylogeny tracking
+  int generation;
+  double best_fitness;
+  double mean_fitness;
+  size_t fittest_id;
+
+  size_t highest_count; // the highest count for a single strategy 
+  size_t most_common_id; // the most populous strategy
+
+  size_t highest_memory; // the highest memory achieved in the population
+  double mean_memory; // mean memory size
+  size_t most_memory_id;
+};
 
 class Population {
 private:
@@ -22,6 +39,11 @@ private:
 
   const bool hard_defect_toggle = true;
   const size_t hard_defect_round = 32;
+
+  const size_t max_replicates = 1;
+
+  // For logging
+  std::vector<GenerationStats> history;
 
 public:
   size_t GetSize() const {
@@ -130,10 +152,21 @@ public:
   void Run(emp::Random & random) {
     for (size_t update = 0; update <= max_generations; ++update) {
       Update(random);
+      RecordUpdate(update);
       if (update % 100 == 0) {
         emp::PrintLn("Update ", update, ":");
         Print();
       }
+    }
+  }
+
+  void MultiRun() {
+    // emp::Random random(0);
+    for (size_t replicate = 0; replicate <= max_replicates; ++replicate) {
+      // random.ResetSeed(0); // Does this work?
+      emp::Random random(replicate);
+      Run(random);
+      ExportHistory("history_" + std::to_string(replicate) + ".csv");
     }
   }
 
@@ -149,6 +182,69 @@ public:
                 << "  DecisionList=" << strategy.GetDecisionList()
                 << "  Name=" << strategy.GetName()
                 << "\n";
+    }
+  }
+
+  void RecordUpdate(int generation) {
+    double best_f = -std::numeric_limits<double>::infinity();
+    double sum_f = 0.0;
+    size_t fittest_id = 0;
+
+    size_t highest_count = 0;
+    size_t most_common_id = 0;
+
+    size_t highest_memory = 0;
+    double sum_memory = 0.0;
+    size_t most_memory_id = 0;
+
+    for (size_t strategy_id = 0; strategy_id < org_counts.size(); ++strategy_id) {
+      if (org_counts[strategy_id] == 0) continue; // Skip strategies not in use
+
+      double strategy_fitness = CalcFitness(strategy_id);
+      if (strategy_fitness > best_f) {
+        best_f = strategy_fitness;
+        fittest_id = strategy_id;
+      }
+      sum_f += strategy_fitness * org_counts[strategy_id];
+
+      if (org_counts[strategy_id] > highest_count) {
+        highest_count = org_counts[strategy_id];
+        most_common_id = strategy_id;
+      }
+
+      size_t memory_size = GetStrategy(strategy_id).GetMemorySize();
+      if (memory_size > highest_memory) {
+        highest_memory = memory_size;
+        most_memory_id = strategy_id;
+      }
+      sum_memory += memory_size * org_counts[strategy_id];
+    }
+
+    // Population size is never be zero
+    double mean_f = sum_f / GetSize();
+    double mean_memory = sum_memory / GetSize();
+
+    history.push_back({generation, best_f, mean_f, fittest_id, 
+      highest_count, most_common_id,
+      highest_memory, mean_memory, most_memory_id});
+  }
+
+  void ExportHistory(const std::string & filename="history.csv") const {
+    std::ofstream ofs(filename);
+    if (ofs.is_open()) {
+      ofs << "Generation,Best_F,Mean_F,Fittest_ID,Highest_Count,Most_Common_ID,Highest_Mem,Mean_Mem,Most_Mem_ID\n";
+      ofs << std::fixed << std::setprecision(3);
+      for (size_t update = 0; update <= max_generations; ++update) {
+        ofs << update << ","
+            << history[update].best_fitness << ","
+            << history[update].mean_fitness << ","
+            << history[update].fittest_id << ","
+            << history[update].highest_count << ","
+            << history[update].most_common_id << ","
+            << history[update].highest_memory << ","
+            << history[update].mean_memory << ","
+            << history[update].most_memory_id << "\n";
+      }
     }
   }
 };
