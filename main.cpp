@@ -33,7 +33,21 @@ int main()
   pop.Print();
 
   // pop.Run(random);
-  pop.MultiRun();
+  // pop.MultiRun();
+
+  Competition comp{majority_response, majority_response, 64, true, 32};
+  auto result = comp.Run();
+  auto p1_moves = result.GetPlayer1Moves();
+  auto p2_moves = result.GetPlayer2Moves();
+  emp::PrintLn("Player 1 Moves: ", p1_moves);
+  emp::PrintLn("Player 2 Moves: ", p2_moves);
+
+  // auto results = comp.GetResults();
+  // for (auto & result : results) {
+  //   emp::PrintLn("Cooperate1 = ", result.GetCooperate1(),"; Cooperate2 = ", result.GetCooperate2());
+  //   emp::PrintLn("\nDefect1 = ", result.GetDefect1(),"; Defect2 = ", result.GetDefect2());
+  // }
+  
 
   // Competition comp{tit_for_tat, always_defect};
   // Competition comp{tit_for_tat, tit_for_tat};
@@ -41,7 +55,6 @@ int main()
   // Competition comp{always_coop, always_defect, NUM_ROUNDS;
   // auto result = comp.Run();
   // emp::PrintLn("Score1 = ", result.GetScore1(), "; Score2 = ", result.GetScore2());
-
 
   // SummaryStrategy test_strat(3, 77);
   // emp::PrintLn("STRAT_ID = ", test_strat.GetID());

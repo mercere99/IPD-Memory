@@ -3,6 +3,7 @@
 #include <compare>
 
 #include "../Empirical/include/emp/io/io_utils.hpp"
+#include "../Empirical/include/emp/bits/Bits.hpp"
 
 #include "Strategy.hpp"
 
@@ -28,12 +29,18 @@ private:
   int forgiveness_count2 = 0; // How many times cooperate AFTER opponent defected
   int reciprocity_count2 = 0; // How many times cooperate AFTER opponent cooperated
 
+  emp::BitVector player1_moves;
+  emp::BitVector player2_moves;
+
 public:
   CompetitionResult() = default;
   CompetitionResult(const CompetitionResult &) = default;
   CompetitionResult(const bool play1, const bool play2, const bool last1, const bool last2)
     : total_rounds(1)
   {
+    player1_moves.push_back(play1);
+    player2_moves.push_back(play2);
+
     if (play1 == DEFECT && play2 == DEFECT) {
       score1 = 1;
       score2 = 1;
@@ -84,6 +91,8 @@ public:
     aggression_count2 += in.aggression_count2; 
     forgiveness_count2 += in.forgiveness_count2;
     reciprocity_count2 += in.reciprocity_count2;
+    player1_moves.Append(in.player1_moves);
+    player2_moves.Append(in.player2_moves);
     return *this;
   }
 
@@ -98,7 +107,8 @@ public:
   [[nodiscard]] int GetCooperate2() const { return forgiveness_count2 + reciprocity_count2; }
   [[nodiscard]] int GetDefect1() const { return retaliation_count1 + aggression_count1; }
   [[nodiscard]] int GetDefect2() const { return retaliation_count2 + aggression_count2; }
-
+  [[nodiscard]] emp::BitVector GetPlayer1Moves() const { return player1_moves; }
+  [[nodiscard]] emp::BitVector GetPlayer2Moves() const { return player2_moves; }
 };
 
 class Competition {
@@ -110,8 +120,6 @@ private:
   // Indicates whether a hard defect will occur in the competition
   const bool hard_defect_toggle; 
   const size_t hard_defect_round;
-
-  emp::vector<CompetitionResult> results;
 
 public:
   Competition(SummaryStrategy strategy1, 
@@ -165,19 +173,16 @@ public:
     for (size_t i = 0; i < num_rounds; ++i) {
       if (hard_defect_toggle && i == hard_defect_round) {
         CompetitionResult r = Compete(mem1, mem2, true);
-        results.emplace_back(r);
         result += r;
       }
       else { 
         CompetitionResult r = Compete(mem1, mem2, false); 
-        results.emplace_back(r);
         result += r;
       } 
     }
     return result;
   }
 
-  [[nodiscard]] emp::vector<CompetitionResult> GetResults() const { return results; }
 };
 
 class CompetitionManager {

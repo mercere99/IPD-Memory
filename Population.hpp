@@ -23,6 +23,7 @@ struct GenerationStats {
   size_t highest_memory; // the highest memory achieved in the population
   double mean_memory; // mean memory size
   size_t most_memory_id;
+
 };
 
 class Population {
@@ -35,6 +36,7 @@ private:
   const size_t max_generations = 10000;
   const size_t num_rounds = 64;
   const double mut_prob = 0.01;
+  // const double mut_prob = 0;
   const double memory_cost = 0.1;
 
   const bool hard_defect_toggle = true;
@@ -43,7 +45,7 @@ private:
   const size_t max_replicates = 1;
 
   // For logging
-  std::vector<GenerationStats> history;
+  emp::vector<GenerationStats> history;
 
 public:
   size_t GetSize() const {
@@ -160,11 +162,11 @@ public:
     }
   }
 
-  void MultiRun() {
-    // emp::Random random(0);
-    for (size_t replicate = 0; replicate <= max_replicates; ++replicate) {
+  void MultiRun(size_t num_replicates = 0) {
+    if (num_replicates == 0) num_replicates = max_replicates;
+    for (size_t replicate = 0; replicate < num_replicates; ++replicate) {
       // random.ResetSeed(0); // Does this work?
-      emp::Random random(replicate);
+      emp::Random random(replicate + 1);
       Run(random);
       ExportHistory("history_" + std::to_string(replicate) + ".csv");
     }
@@ -186,7 +188,7 @@ public:
   }
 
   void RecordUpdate(int generation) {
-    double best_f = -std::numeric_limits<double>::infinity();
+    double best_f = std::numeric_limits<double>::lowest();
     double sum_f = 0.0;
     size_t fittest_id = 0;
 
@@ -224,9 +226,9 @@ public:
     double mean_f = sum_f / GetSize();
     double mean_memory = sum_memory / GetSize();
 
-    history.push_back({generation, best_f, mean_f, fittest_id, 
+    history.emplace_back(generation, best_f, mean_f, fittest_id, 
       highest_count, most_common_id,
-      highest_memory, mean_memory, most_memory_id});
+      highest_memory, mean_memory, most_memory_id);
   }
 
   void ExportHistory(const std::string & filename="history.csv") const {
