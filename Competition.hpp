@@ -94,6 +94,11 @@ public:
 
   [[nodiscard]] int GetScore1() const { return score1; }
   [[nodiscard]] int GetScore2() const { return score2; }
+  [[nodiscard]] int GetCooperate1() const { return forgiveness_count1 + reciprocity_count1; }
+  [[nodiscard]] int GetCooperate2() const { return forgiveness_count2 + reciprocity_count2; }
+  [[nodiscard]] int GetDefect1() const { return retaliation_count1 + aggression_count1; }
+  [[nodiscard]] int GetDefect2() const { return retaliation_count2 + aggression_count2; }
+
 };
 
 class Competition {
@@ -105,6 +110,8 @@ private:
   // Indicates whether a hard defect will occur in the competition
   const bool hard_defect_toggle; 
   const size_t hard_defect_round;
+
+  emp::vector<CompetitionResult> results;
 
 public:
   Competition(SummaryStrategy strategy1, 
@@ -125,7 +132,7 @@ public:
     const bool hd_toggle) const 
   { 
     const bool action1 = hd_toggle ? DEFECT : strategy1.GetAction(mem1);
-    const bool action2 = strategy2.GetAction(mem2);
+    const bool action2 = hd_toggle ? DEFECT : strategy2.GetAction(mem2);
     CompetitionResult result(action1, action2, mem1[0], mem2[0]);
     // emp::PrintLn("Action1:", action1, "  Action2:", action2);
 
@@ -157,13 +164,20 @@ public:
 
     for (size_t i = 0; i < num_rounds; ++i) {
       if (hard_defect_toggle && i == hard_defect_round) {
-        result += Compete(mem1, mem2, true);
+        CompetitionResult r = Compete(mem1, mem2, true);
+        results.emplace_back(r);
+        result += r;
       }
-      else { result += Compete(mem1, mem2, false); } 
+      else { 
+        CompetitionResult r = Compete(mem1, mem2, false); 
+        results.emplace_back(r);
+        result += r;
+      } 
     }
-
     return result;
   }
+
+  [[nodiscard]] emp::vector<CompetitionResult> GetResults() const { return results; }
 };
 
 class CompetitionManager {
