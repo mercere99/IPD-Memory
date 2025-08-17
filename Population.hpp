@@ -37,10 +37,11 @@ private:
   const size_t num_rounds = 64;
   const double mut_prob = 0.01;
   // const double mut_prob = 0;
-  const double memory_cost = 0.1;
+  // const double memory_cost = 0.1;
+  const double memory_cost = 0;
 
-  const bool hard_defect_toggle = true;
-  const size_t hard_defect_round = 32;
+  const bool hard_defect_toggle = false;
+  const size_t hard_defect_round = 31; // rounds are indexed starting from 0
 
   const size_t max_replicates = 1;
 
@@ -138,7 +139,9 @@ public:
       // Mutate?
       if (random.P(mut_prob)) {
         const SummaryStrategy mut_strategy = GetStrategy(id).Mutate(random);
+        // std::cout << "Mutated Strategy: " << mut_strategy.GetStartState() << ", " << mut_strategy.GetDecisionList() << "\n";
         id = mut_strategy.GetID();
+        // std::cout << "Mutated Strategy ID: " << id << "\n";
         if (id >= next_counts.size()) {
           next_counts.resize(id+1);
         }
@@ -168,7 +171,7 @@ public:
       // random.ResetSeed(0); // Does this work?
       emp::Random random(replicate + 1);
       Run(random);
-      ExportHistory("history_" + std::to_string(replicate) + ".csv");
+      ExportHistory("history_" + std::to_string(replicate));
     }
   }
 
@@ -231,21 +234,55 @@ public:
       highest_memory, mean_memory, most_memory_id);
   }
 
-  void ExportHistory(const std::string & filename="history.csv") const {
-    std::ofstream ofs(filename);
-    if (ofs.is_open()) {
-      ofs << "Generation,Best_F,Mean_F,Fittest_ID,Highest_Count,Most_Common_ID,Highest_Mem,Mean_Mem,Most_Mem_ID\n";
-      ofs << std::fixed << std::setprecision(3);
+  void ExportHistory(const std::string & filename="history") const {
+    emp_assert(history.size() > 0);
+
+    std::ofstream fitness_file(filename + "_fitness.csv");
+    std::ofstream count_file(filename + "_count.csv");
+    std::ofstream memory_file(filename + "_memory.csv");
+    if (fitness_file.is_open()) {
+      fitness_file << "Generation,Best_F,Mean_F,Fittest_ID,Fittest_StartState,Fittest_DecisionList\n";
+      fitness_file << std::fixed << std::setprecision(3);
+
       for (size_t update = 0; update <= max_generations; ++update) {
-        ofs << update << ","
-            << history[update].best_fitness << ","
-            << history[update].mean_fitness << ","
-            << history[update].fittest_id << ","
-            << history[update].highest_count << ","
-            << history[update].most_common_id << ","
-            << history[update].highest_memory << ","
-            << history[update].mean_memory << ","
-            << history[update].most_memory_id << "\n";
+        fitness_file << update << ","
+          << history[update].best_fitness << ","
+          << history[update].mean_fitness << ","
+          << history[update].fittest_id << ",";
+        SummaryStrategy fittest(history[update].fittest_id);
+        emp::BitVector fittest_start_state = fittest.GetStartState();
+        emp::BitVector fittest_decision_list = fittest.GetDecisionList();
+        fitness_file << fittest_start_state << "," << fittest_decision_list << "\n";
+      }
+    }
+    if (count_file.is_open()) {
+      count_file << "Generation,Highest_Count,Most_Common_ID,Most_Common_StartState,Most_Common_DecisionList\n";
+      count_file << std::fixed << std::setprecision(3);
+
+      for (size_t update = 0; update <= max_generations; ++update) {
+        count_file << update << ","
+          << history[update].highest_count << ","
+          << history[update].most_common_id << ",";
+        
+        SummaryStrategy most_common(history[update].most_common_id);
+        emp::BitVector most_common_start_state = most_common.GetStartState();
+        emp::BitVector most_common_decision_list = most_common.GetDecisionList();
+        count_file << most_common_start_state << "," << most_common_decision_list << "\n";
+      }
+    }
+    if (memory_file.is_open()) {
+      memory_file << "Generation,Highest_Mem,Mean_Mem,Most_Mem_ID,Most_Mem_StartState,Most_Mem_DecisionList\n";
+      memory_file << std::fixed << std::setprecision(3);
+      for (size_t update = 0; update <= max_generations; ++update) {
+        memory_file << update << ","
+          << history[update].highest_memory << ","
+          << history[update].mean_memory << ","
+          << history[update].most_memory_id << ",";
+        
+        SummaryStrategy most_memory(history[update].most_memory_id);
+        emp::BitVector most_memory_start_state = most_memory.GetStartState();
+        emp::BitVector most_memory_decision_list = most_memory.GetDecisionList();
+        memory_file << most_memory_start_state << "," << most_memory_decision_list << "\n";
       }
     }
   }

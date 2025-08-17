@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <fstream>
 
 #include "../Empirical/include/emp/io/io_utils.hpp"
 #include "../Empirical/include/emp/math/Random.hpp"
@@ -21,26 +22,93 @@ int main()
   SummaryStrategy always_coop{all_cooperate_memory, "1111", "AC"};
   SummaryStrategy always_defect{all_cooperate_memory, "0000", "AD"};
 
+  SummaryStrategy mem_1_tft("1", "10", "tit-for-tat");
+  SummaryStrategy mem_1_ad("1", "00", "AD");
+
   emp::Random random;
 
   Population pop;
-  pop.AddOrg(tit_for_tat, 500);
-  pop.AddOrg(majority_response, 500);
-  pop.AddOrg(always_coop, 500);
-  pop.AddOrg(always_defect, 500);
+  // pop.AddOrg(tit_for_tat, 500); // Strategy 57
+  // pop.AddOrg(majority_response, 500); // Strategy 69
+  // pop.AddOrg(always_coop, 500); // Strategy 169
+  // pop.AddOrg(always_defect, 500); // Strategy 49
 
-  std::cout << "Start state:\n";
-  pop.Print();
+  pop.AddOrg(mem_1_tft, 4); // Strategy 5
+  pop.AddOrg(mem_1_ad, 496); // Strategy 49
+
+  // std::cout << "Start state:\n";
+  // pop.Print();
 
   // pop.Run(random);
   // pop.MultiRun();
 
-  Competition comp{majority_response, majority_response, 64, true, 32};
-  auto result = comp.Run();
+
+  // --- TODO: DEBUGGING MEMORY 0 ---
+  SummaryStrategy mem_0_ad(0, "AD");
+  SummaryStrategy mem_0_ac(1, "AC");
+
+  Competition comp{mem_0_ac, mem_0_ad, 64, false, 31};
+  auto result = comp.Run(); // Here's where it's stuck
   auto p1_moves = result.GetPlayer1Moves();
   auto p2_moves = result.GetPlayer2Moves();
   emp::PrintLn("Player 1 Moves: ", p1_moves);
   emp::PrintLn("Player 2 Moves: ", p2_moves);
+
+
+
+
+  // Majority Response - Hard Defect
+  // Competition comp{majority_response, majority_response, 64, true, 31};
+  // auto result = comp.Run();
+  // auto p1_moves = result.GetPlayer1Moves();
+  // auto p2_moves = result.GetPlayer2Moves();
+  // emp::PrintLn("Player 1 Moves: ", p1_moves);
+  // emp::PrintLn("Player 2 Moves: ", p2_moves);
+
+  // Majority Response - Ideal
+  // Competition comp{majority_response, majority_response, 64, false, 31};
+  // auto result = comp.Run();
+  // auto p1_moves = result.GetPlayer1Moves();
+  // auto p2_moves = result.GetPlayer2Moves();
+  // emp::PrintLn("Player 1 Moves: ", p1_moves);
+  // emp::PrintLn("Player 2 Moves: ", p2_moves);
+
+  // Tit For Tat - Hard Defect
+  // Competition comp{tit_for_tat, tit_for_tat, 64, true, 31};
+  // auto result = comp.Run();
+  // auto p1_moves = result.GetPlayer1Moves();
+  // auto p2_moves = result.GetPlayer2Moves();
+  // emp::PrintLn("Player 1 Moves: ", p1_moves);
+  // emp::PrintLn("Player 2 Moves: ", p2_moves);
+
+  // Tit For Tat - Ideal
+  // Competition comp{tit_for_tat, tit_for_tat, 64, false, 31};
+  // auto result = comp.Run();
+  // auto p1_moves = result.GetPlayer1Moves();
+  // auto p2_moves = result.GetPlayer2Moves();
+  // emp::PrintLn("Player 1 Moves: ", p1_moves);
+  // emp::PrintLn("Player 2 Moves: ", p2_moves);
+
+  
+  // // Save bit strings as long format table
+  // emp::String p1_moves_str = p1_moves.ToArrayString();
+  // emp::String p2_moves_str = p2_moves.ToArrayString();
+  // emp::PrintLn(p1_moves_str);
+  // emp::PrintLn(p2_moves_str);
+
+  // // std::ofstream ofs("MR_HD.csv");
+  // // std::ofstream ofs("MR_Ideal.csv");
+  // // std::ofstream ofs("TFT_HD.csv");
+  // std::ofstream ofs("TFT_Ideal.csv");
+  // if (ofs.is_open()) {
+  //   ofs << "Round,Player,Move\n";
+  //   for (size_t round = 0; round < 64; ++round) {
+  //     char move1 = p1_moves_str[round] == '1' ? 'C' : 'D';
+  //     char move2 = p2_moves_str[round] == '1' ? 'C' : 'D';
+  //     ofs << round + 1 << "," << "P1" << "," << move1 << "\n";
+  //     ofs << round + 1 << "," << "P2" << "," << move2 << "\n";
+  //   }
+  // }
 
   // auto results = comp.GetResults();
   // for (auto & result : results) {

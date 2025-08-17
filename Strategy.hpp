@@ -116,13 +116,19 @@ public:
   [[nodiscard]] size_t GetMemorySize() const { return start_state.size(); }
   [[nodiscard]] size_t GetID() const {
     size_t offset = CalcFirstStrategyID(GetMemorySize());
-    size_t start_state_id = start_state.GetUInt32(0);
+    // In case start state is empty
+    size_t start_state_id = (start_state.size() > 0) ? start_state.GetUInt32(0) : 0;
     size_t decision_id = decision_list.GetUInt32(0);
     return offset + start_state_id + (decision_id << start_state.size());
   }
 
+  // TODO: Bug when memory is empty
   [[nodiscard]] bool GetAction(const emp::BitVector & mem) const {
     emp_assert(mem.size() == start_state.size());
+    emp_assert(decision_list.size() > 0);
+    emp::PrintLn("DECISION LIST: ", decision_list);
+    // If zero memory, return the only decision available
+    if (mem.size() == 0) return decision_list[0]; // Something is wrong with the indexing?
     size_t num_opponent_defects = mem.CountZeros();
     return decision_list[num_opponent_defects];
   }
