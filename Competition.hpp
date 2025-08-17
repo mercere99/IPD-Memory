@@ -139,10 +139,11 @@ public:
     // 'hd_toggle' (NOT 'hard_defect_toggle') indicates whether a hard defect will occur this round
     const bool hd_toggle) const 
   { 
+    // TODO: Bug in GetAction() when memory is 0
     const bool action1 = hd_toggle ? DEFECT : strategy1.GetAction(mem1);
     const bool action2 = hd_toggle ? DEFECT : strategy2.GetAction(mem2);
     CompetitionResult result(action1, action2, mem1[0], mem2[0]);
-    // emp::PrintLn("Action1:", action1, "  Action2:", action2);
+    emp::PrintLn("Action1:", action1, "  Action2:", action2);
 
     // Update Memory
     mem1.PushFront(action2);
@@ -166,11 +167,14 @@ public:
   }
 
   [[nodiscard]] CompetitionResult Run() const {
+    // TODO: Bug at Compete() when strategies are memory 0
     CompetitionResult result;
     emp::BitVector mem1 = strategy1.GetStartState();
     emp::BitVector mem2 = strategy2.GetStartState();
+    emp::PrintLn("got start states successfully");
 
     for (size_t i = 0; i < num_rounds; ++i) {
+      emp::PrintLn("round ", i);
       if (hard_defect_toggle && i == hard_defect_round) {
         CompetitionResult r = Compete(mem1, mem2, true);
         result += r;
