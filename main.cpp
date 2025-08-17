@@ -5,8 +5,8 @@
 #include <string>
 #include <fstream>
 
-#include "../Empirical/include/emp/io/io_utils.hpp"
-#include "../Empirical/include/emp/math/Random.hpp"
+#include "emp/io/io_utils.hpp"
+#include "emp/math/Random.hpp"
 
 #include "Competition.hpp"
 #include "Population.hpp"
@@ -17,10 +17,10 @@ int main()
   // Only tit-for-tat with grudge is possible! (No way to know if defect was recent)
   emp::BitVector all_cooperate_memory{COOPERATE, COOPERATE, COOPERATE};
 
-  SummaryStrategy tit_for_tat(all_cooperate_memory, "1000", "tit-for-tat");
+  SummaryStrategy always_coop{"", "1", "AC"};
+  SummaryStrategy always_defect{"", "0", "AD"};
+  SummaryStrategy tit_for_tat("1", "10", "tit-for-tat");
   SummaryStrategy majority_response{"110", "1100", "majority"};
-  SummaryStrategy always_coop{all_cooperate_memory, "1111", "AC"};
-  SummaryStrategy always_defect{all_cooperate_memory, "0000", "AD"};
 
   SummaryStrategy mem_1_tft("1", "10", "tit-for-tat");
   SummaryStrategy mem_1_ad("1", "00", "AD");
@@ -28,31 +28,31 @@ int main()
   emp::Random random;
 
   Population pop;
-  // pop.AddOrg(tit_for_tat, 500); // Strategy 57
-  // pop.AddOrg(majority_response, 500); // Strategy 69
-  // pop.AddOrg(always_coop, 500); // Strategy 169
-  // pop.AddOrg(always_defect, 500); // Strategy 49
+  pop.AddOrg(tit_for_tat, 500); // Strategy 57
+  pop.AddOrg(majority_response, 500); // Strategy 69
+  pop.AddOrg(always_coop, 500); // Strategy 169
+  pop.AddOrg(always_defect, 500); // Strategy 49
 
-  pop.AddOrg(mem_1_tft, 4); // Strategy 5
-  pop.AddOrg(mem_1_ad, 496); // Strategy 49
+  // pop.AddOrg(mem_1_tft, 4); // Strategy 5
+  // pop.AddOrg(mem_1_ad, 496); // Strategy 49
 
   // std::cout << "Start state:\n";
   // pop.Print();
 
-  // pop.Run(random);
+  pop.Run(random);
   // pop.MultiRun();
 
 
-  // --- TODO: DEBUGGING MEMORY 0 ---
-  SummaryStrategy mem_0_ad(0, "AD");
-  SummaryStrategy mem_0_ac(1, "AC");
+  // // --- TODO: DEBUGGING MEMORY 0 ---
+  // SummaryStrategy mem_0_ad(0, "AD");
+  // SummaryStrategy mem_0_ac(1, "AC");
 
-  Competition comp{mem_0_ac, mem_0_ad, 64, false, 31};
-  auto result = comp.Run(); // Here's where it's stuck
-  auto p1_moves = result.GetPlayer1Moves();
-  auto p2_moves = result.GetPlayer2Moves();
-  emp::PrintLn("Player 1 Moves: ", p1_moves);
-  emp::PrintLn("Player 2 Moves: ", p2_moves);
+  // Competition comp{mem_0_ac, mem_0_ad, 64, false, 31};
+  // auto result = comp.Run(); // Here's where it's stuck
+  // auto p1_moves = result.GetPlayer1Moves();
+  // auto p2_moves = result.GetPlayer2Moves();
+  // emp::PrintLn("Player 1 Moves: ", p1_moves);
+  // emp::PrintLn("Player 2 Moves: ", p2_moves);
 
 
 
