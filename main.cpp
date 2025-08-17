@@ -64,11 +64,22 @@ int main(int argc, char * argv[])
     [&pop](emp::vector<emp::String> args){
       if (args.size() < 1) { emp::notify::Error("Must specify random seed to use."); abort(); }
       if (!args[0].OnlyDigits()) { emp::notify::Error("Seed for a Run must be numerical."); abort(); }
-      size_t random_seed = args[0].AsULL();
-      emp::PrintLn("=== Starting Run with seed ", random_seed, " ===");
-      emp::Random random(random_seed);
-      Population test_pop = pop; // Keep the original population with base stats.
-      test_pop.Run(random);
+      size_t start_seed = args[0].AsULL();
+      size_t end_seed = start_seed + 1;
+      if (args.size() > 1) {
+        if (!args[1].OnlyDigits()) { emp::notify::Error("End seed for a Run must be numerical."); abort(); }
+        end_seed = args[1].AsULL();
+        if (end_seed <= start_seed) {
+          emp::notify::Error("End seed for a run (", end_seed,") must be greater than start seed (", start_seed, ").");
+          abort();
+        }
+      }
+      for (size_t cur_seed = start_seed; cur_seed < end_seed; ++cur_seed) {
+        emp::PrintLn("=== Starting Run with seed ", cur_seed, " ===");
+        emp::Random random(cur_seed);
+        Population test_pop = pop; // Keep the original population with base stats.
+        test_pop.Run(random);
+      }
     },
     "Add strategy with NAME DECISION_LIST STARTING_MEMORY\nSkip STARTING_MEMORY if empty.");
 
