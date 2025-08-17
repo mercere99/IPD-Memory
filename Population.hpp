@@ -35,6 +35,7 @@ private:
   CompetitionManager manager;
 
   size_t max_generations = 10000;
+  size_t print_step = 100;  // How many generations between printing results?
   size_t num_rounds = 64;
   double mut_prob = 0.01;
   // double mut_prob = 0.0;
@@ -51,6 +52,7 @@ private:
 
 public:
   void SetupConfig(emp::SettingsManager & settings) {
+    settings.AddSetting("print_step", print_step, "How many generations between printing outputs?", 'p');
     settings.AddSetting("max_generation", max_generations, "How many generations should each run go for", 'g');
     settings.AddSetting("num_rounds", num_rounds, "How many rounds should each competition go?", 'n');
     settings.AddSetting("mut_prob", mut_prob, "Probability of a single mutation", 'm');
@@ -168,7 +170,7 @@ public:
     for (size_t update = 0; update <= max_generations; ++update) {
       Update(random);
       RecordUpdate(update);
-      if (update % 100 == 0) {
+      if (update % print_step == 0) {
         emp::PrintLn("Update ", update, ":");
         Print();
       }
