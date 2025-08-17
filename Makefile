@@ -9,7 +9,7 @@ TARGET := IPD-Memory
 FLAGS_version := -std=c++23
 FLAGS_warn    = -Wall -Wextra -Wno-unused-function -Woverloaded-virtual -pedantic
 FLAGS_include = -I$(EMP_DIR)/include/
-FLAGS_main    = $(FLAGS_version) $(FLAGS_warn) $(FLAGS_include) -pthread
+FLAGS_main    = $(FLAGS_version) $(FLAGS_warn) $(FLAGS_include)
 
 FLAGS_QUICK  = $(FLAGS_main) -DNDEBUG
 FLAGS_DEBUG  = $(FLAGS_main) -g -DEMP_TRACK_MEM
