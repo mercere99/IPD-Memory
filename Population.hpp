@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "emp/base/vector.hpp"
+#include "emp/config/SettingsManager.hpp"
 #include "emp/datastructs/UnorderedIndexMap.hpp"
 #include "emp/math/Random.hpp"
 
@@ -28,27 +29,36 @@ struct GenerationStats {
 
 class Population {
 private:
-  emp::vector<size_t> org_counts;              // Map of strategy ID to how many are in population.
-  mutable emp::vector<SummaryStrategy> strategy_info;  // More details about strategies being used.
+  emp::vector<size_t> org_counts;                      // Map of strategy ID to num in population.
+  mutable emp::vector<SummaryStrategy> strategy_info;  // Details about strategies being used.
   size_t generation = 0;
   CompetitionManager manager;
 
-  const size_t max_generations = 10000;
-  const size_t num_rounds = 64;
-  const double mut_prob = 0.01;
-  // const double mut_prob = 0;
-  // const double memory_cost = 0.1;
-  const double memory_cost = 0;
+  size_t max_generations = 10000;
+  size_t num_rounds = 64;
+  double mut_prob = 0.01;
+  // double mut_prob = 0.0;
+  // double memory_cost = 0.1;
+  double memory_cost = 0.0;
 
-  const size_t hard_defect_round = emp::MAX_SIZE_T; // Hard defect will never occur
-  // const size_t hard_defect_round = 31; // rounds are indexed starting from 0
+  size_t hard_defect_round = emp::MAX_SIZE_T; // Hard defect will never occur
+  // size_t hard_defect_round = 31; // rounds are indexed starting from 0
 
-  const size_t max_replicates = 1;
+  size_t max_replicates = 1;  // Number of runs performed in a multi-run, by default
 
   // For logging
   emp::vector<GenerationStats> history;
 
 public:
+  void SetupConfig(emp::SettingsManager & settings) {
+    settings.AddSetting("max_generation", max_generations, "How many generations should each run go for", 'g');
+    settings.AddSetting("num_rounds", num_rounds, "How many rounds should each competition go?", 'n');
+    settings.AddSetting("mut_prob", mut_prob, "Probability of a single mutation", 'm');
+    settings.AddSetting("memory_cost", memory_cost, "Extra cost per bit of memory", 'c');
+    settings.AddSetting("hard_defect_round", hard_defect_round, "When should a defect be forced?", 'd');
+    settings.AddSetting("max_replicates", max_replicates, "How many replicates should be performed?", 'r');
+  }
+
   size_t GetSize() const {
     size_t total = 0;
     for (size_t count : org_counts) total += count;

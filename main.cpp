@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 
+#include "emp/config/SettingsManager.hpp"
 #include "emp/io/io_utils.hpp"
 #include "emp/math/Random.hpp"
 
@@ -14,116 +15,60 @@
 
 int main()
 {
-  // Only tit-for-tat with grudge is possible! (No way to know if defect was recent)
-  emp::BitVector all_cooperate_memory{COOPERATE, COOPERATE, COOPERATE};
+  size_t random_seed = 0;  // 0 is based on time.
 
-  SummaryStrategy always_coop{"", "1", "AC"};
-  SummaryStrategy always_defect{"", "0", "AD"};
-  SummaryStrategy tit_for_tat("1", "10", "tit-for-tat");
-  SummaryStrategy majority_response{"110", "1100", "majority"};
-
-  SummaryStrategy mem_1_tft("1", "10", "tit-for-tat");
-  SummaryStrategy mem_1_ad("1", "00", "AD");
-
-  emp::Random random;
+  emp::SettingsManager settings;
+  settings.AddSetting("random_seed", random_seed, "Random seed to use (0 = based on time)", 's');
 
   Population pop;
-  pop.AddOrg(tit_for_tat, 500); // Strategy 57
-  pop.AddOrg(majority_response, 500); // Strategy 69
-  pop.AddOrg(always_coop, 500); // Strategy 169
-  pop.AddOrg(always_defect, 500); // Strategy 49
+  pop.SetupConfig(settings);
 
-  // pop.AddOrg(mem_1_tft, 4); // Strategy 5
-  // pop.AddOrg(mem_1_ad, 496); // Strategy 49
+  std::map<emp::String, SummaryStrategy> strategy_map;
 
-  // std::cout << "Start state:\n";
-  // pop.Print();
+  // Add a "Strategy" keyword to specify new strategies right from the config file.
+  settings.AddKeyword("Strategy",
+    [&strategy_map](emp::vector<emp::String> args){
+      if (args.size() < 1) { emp::notify::Error("Must specify NAME when defining a strategy."); abort(); }
+      emp::String name = args[0];
+      if (args.size() < 2) { emp::notify::Error("Must specify DECISION_LIST when defining strategy '", name, "'."); abort(); }
+      if (!args[1].IsComposedOf("01")) { emp::notify::Error("DECISION_LIST for strategy '", name, "' must be a binary sequence."); abort(); }
+      emp::String decision_list = args[1];
+      size_t mem_size = decision_list.size() - 1;
+      emp::String start_memory = "";
+      if (mem_size > 0) {
+        if (args.size() < 3) { emp::notify::Error("Must specify STARTING_MEMORY when defining strategy '", name, "'."); abort(); }
+        if (!args[2].IsComposedOf("01")) { emp::notify::Error("STARTING_MEMORY for strategy '", name, "' must be a binary sequence."); abort(); }
+        if (args[2].size() != mem_size) { emp::notify::Error("STARTING_MEMORY size for '", name, "' must be ", mem_size, "."); abort(); }
+        start_memory = args[2];
+      }
+      strategy_map.emplace(name, SummaryStrategy{start_memory, decision_list, name});
+      emp::PrintLn("Defined strategy '", name, "'.");
+    },
+    "Add strategy with NAME DECISION_LIST STARTING_MEMORY\nSkip STARTING_MEMORY if empty.");
 
+  // Add a "Inject" keyword to add specific strategies into the population.
+  settings.AddKeyword("Inject",
+    [&strategy_map, &pop](emp::vector<emp::String> args){
+      if (args.size() < 1) { emp::notify::Error("Must specify NAME of strategy to Inject into population."); abort(); }
+      emp::String name = args[0];
+      if (!strategy_map.contains(name)) { emp::notify::Error("Strategy '", name, "' Unknown!  Cannot Inject."); abort(); }
+      if (args.size() < 2) { emp::notify::Error("Must specify HOW MANY of strategy '", name, "' to Inject."); abort(); }
+      if (!args[1].OnlyDigits()) { emp::notify::Error("Number of strategy '", name, "' to inject must be a whole number."); abort(); }
+      size_t inject_count = args[1].AsULL();
+      pop.AddOrg(strategy_map[name], inject_count);
+      emp::PrintLn("Injected ", inject_count, " of strategy '", name, "'.");
+    },
+    "Add strategy with NAME DECISION_LIST STARTING_MEMORY\nSkip STARTING_MEMORY if empty.");
+
+  // settings.SetVerbose();
+  bool success = settings.Load("IPD.cfg");
+  if (!success) {
+    emp::PrintLn(settings.GetError());
+    exit(1);
+  }
+
+  emp::Random random(random_seed);
   pop.Run(random);
   // pop.MultiRun();
 
-
-  // // --- TODO: DEBUGGING MEMORY 0 ---
-  // SummaryStrategy mem_0_ad(0, "AD");
-  // SummaryStrategy mem_0_ac(1, "AC");
-
-  // Competition comp{mem_0_ac, mem_0_ad, 64, false, 31};
-  // auto result = comp.Run(); // Here's where it's stuck
-  // auto p1_moves = result.GetPlayer1Moves();
-  // auto p2_moves = result.GetPlayer2Moves();
-  // emp::PrintLn("Player 1 Moves: ", p1_moves);
-  // emp::PrintLn("Player 2 Moves: ", p2_moves);
-
-
-
-
-  // Majority Response - Hard Defect
-  // Competition comp{majority_response, majority_response, 64, true, 31};
-  // auto result = comp.Run();
-  // auto p1_moves = result.GetPlayer1Moves();
-  // auto p2_moves = result.GetPlayer2Moves();
-  // emp::PrintLn("Player 1 Moves: ", p1_moves);
-  // emp::PrintLn("Player 2 Moves: ", p2_moves);
-
-  // Majority Response - Ideal
-  // Competition comp{majority_response, majority_response, 64, false, 31};
-  // auto result = comp.Run();
-  // auto p1_moves = result.GetPlayer1Moves();
-  // auto p2_moves = result.GetPlayer2Moves();
-  // emp::PrintLn("Player 1 Moves: ", p1_moves);
-  // emp::PrintLn("Player 2 Moves: ", p2_moves);
-
-  // Tit For Tat - Hard Defect
-  // Competition comp{tit_for_tat, tit_for_tat, 64, true, 31};
-  // auto result = comp.Run();
-  // auto p1_moves = result.GetPlayer1Moves();
-  // auto p2_moves = result.GetPlayer2Moves();
-  // emp::PrintLn("Player 1 Moves: ", p1_moves);
-  // emp::PrintLn("Player 2 Moves: ", p2_moves);
-
-  // Tit For Tat - Ideal
-  // Competition comp{tit_for_tat, tit_for_tat, 64, false, 31};
-  // auto result = comp.Run();
-  // auto p1_moves = result.GetPlayer1Moves();
-  // auto p2_moves = result.GetPlayer2Moves();
-  // emp::PrintLn("Player 1 Moves: ", p1_moves);
-  // emp::PrintLn("Player 2 Moves: ", p2_moves);
-
-  
-  // // Save bit strings as long format table
-  // emp::String p1_moves_str = p1_moves.ToArrayString();
-  // emp::String p2_moves_str = p2_moves.ToArrayString();
-  // emp::PrintLn(p1_moves_str);
-  // emp::PrintLn(p2_moves_str);
-
-  // // std::ofstream ofs("MR_HD.csv");
-  // // std::ofstream ofs("MR_Ideal.csv");
-  // // std::ofstream ofs("TFT_HD.csv");
-  // std::ofstream ofs("TFT_Ideal.csv");
-  // if (ofs.is_open()) {
-  //   ofs << "Round,Player,Move\n";
-  //   for (size_t round = 0; round < 64; ++round) {
-  //     char move1 = p1_moves_str[round] == '1' ? 'C' : 'D';
-  //     char move2 = p2_moves_str[round] == '1' ? 'C' : 'D';
-  //     ofs << round + 1 << "," << "P1" << "," << move1 << "\n";
-  //     ofs << round + 1 << "," << "P2" << "," << move2 << "\n";
-  //   }
-  // }
-
-  // auto results = comp.GetResults();
-  // for (auto & result : results) {
-  //   emp::PrintLn("Cooperate1 = ", result.GetCooperate1(),"; Cooperate2 = ", result.GetCooperate2());
-  //   emp::PrintLn("\nDefect1 = ", result.GetDefect1(),"; Defect2 = ", result.GetDefect2());
-  // }
-  
-
-  // Competition comp{tit_for_tat, always_defect};
-  // Competition comp{tit_for_tat, tit_for_tat};
-  // Competition comp{tit_for_tat, always_coop};
-  // Competition comp{always_coop, always_defect, NUM_ROUNDS;
-  // auto result = comp.Run();
-  // emp::PrintLn("Score1 = ", result.GetScore1(), "; Score2 = ", result.GetScore2());
-
-  // SummaryStrategy test_strat(3, 77);
-  // emp::PrintLn("STRAT_ID = ", test_strat.GetID());
 }
