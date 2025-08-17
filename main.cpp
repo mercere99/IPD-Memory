@@ -13,8 +13,12 @@
 #include "Population.hpp"
 #include "Strategy.hpp"
 
-int main()
+int main(int argc, char * argv[])
 {
+  // For now, if there is an argument, it is the name of the config file to use.
+  emp::String config_name = "IPD.cfg";
+  if (argc > 1) config_name = argv[1];
+
   emp::SettingsManager settings;
   Population pop;
   pop.SetupConfig(settings);
@@ -69,7 +73,7 @@ int main()
     "Add strategy with NAME DECISION_LIST STARTING_MEMORY\nSkip STARTING_MEMORY if empty.");
 
   // settings.SetVerbose();
-  bool success = settings.Load("IPD.cfg");
+  bool success = settings.Load(config_name);
   if (!success) {
     emp::PrintLn(settings.GetError());
     exit(1);
