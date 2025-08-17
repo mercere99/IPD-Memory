@@ -3,9 +3,9 @@
 #include <fstream>
 #include <vector>
 
-#include "../Empirical/include/emp/base/vector.hpp"
-#include "../Empirical/include/emp/datastructs/UnorderedIndexMap.hpp"
-#include "../Empirical/include/emp/math/Random.hpp"
+#include "emp/base/vector.hpp"
+#include "emp/datastructs/UnorderedIndexMap.hpp"
+#include "emp/math/Random.hpp"
 
 #include "Competition.hpp"
 #include "Strategy.hpp"
@@ -112,7 +112,7 @@ public:
       const size_t opponent_count = org_counts[opponent_id] - (strategy_id == opponent_id);
       const double base_fitness = manager
                                   .Compete(strategy_id, opponent_id, num_rounds, hard_defect_toggle, hard_defect_round)
-                                  .GetScore1();
+                                  .CalcScore1();
       const double penalty = GetStrategy(strategy_id).GetMemorySize() * memory_cost;
       fitness +=  (base_fitness - penalty) * opponent_count;
     }
