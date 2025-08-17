@@ -15,11 +15,7 @@
 
 int main()
 {
-  size_t random_seed = 0;  // 0 is based on time.
-
   emp::SettingsManager settings;
-  settings.AddSetting("random_seed", random_seed, "Random seed to use (0 = based on time)", 's');
-
   Population pop;
   pop.SetupConfig(settings);
 
@@ -60,6 +56,18 @@ int main()
     },
     "Add strategy with NAME DECISION_LIST STARTING_MEMORY\nSkip STARTING_MEMORY if empty.");
 
+  settings.AddKeyword("Run",
+    [&pop](emp::vector<emp::String> args){
+      if (args.size() < 1) { emp::notify::Error("Must specify random seed to use."); abort(); }
+      if (!args[0].OnlyDigits()) { emp::notify::Error("Seed for a Run must be numerical."); abort(); }
+      size_t random_seed = args[0].AsULL();
+      emp::PrintLn("=== Starting Run with seed ", random_seed, " ===");
+      emp::Random random(random_seed);
+      Population test_pop = pop; // Keep the original population with base stats.
+      test_pop.Run(random);
+    },
+    "Add strategy with NAME DECISION_LIST STARTING_MEMORY\nSkip STARTING_MEMORY if empty.");
+
   // settings.SetVerbose();
   bool success = settings.Load("IPD.cfg");
   if (!success) {
@@ -67,8 +75,6 @@ int main()
     exit(1);
   }
 
-  emp::Random random(random_seed);
-  pop.Run(random);
   // pop.MultiRun();
 
 }
