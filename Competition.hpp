@@ -66,30 +66,27 @@ private:
   const size_t num_rounds;
 
   // Indicates whether a hard defect will occur in the competition
-  const bool hard_defect_toggle; 
   const size_t hard_defect_round;
 
 public:
   Competition(SummaryStrategy strategy1, 
               SummaryStrategy strategy2, 
               size_t num_rounds,
-              bool hard_defect_toggle,
               size_t hard_defect_round)
     : strategy1(strategy1), 
       strategy2(strategy2), 
       num_rounds(num_rounds), 
-      hard_defect_toggle(hard_defect_toggle),
       hard_defect_round(hard_defect_round) {}
 
   [[nodiscard]] CompetitionResult Compete(
     emp::BitVector & mem1,
     emp::BitVector & mem2,
-    // 'hd_toggle' (NOT 'hard_defect_toggle') indicates whether a hard defect will occur this round
-    const bool hd_toggle) const 
+    // 'force_defect' indicates whether a hard defect will occur THIS round
+    const bool force_defect) const 
   { 
     // TODO: Bug in GetAction() when memory is 0
-    const bool action1 = hd_toggle ? DEFECT : strategy1.GetAction(mem1);
-    const bool action2 = hd_toggle ? DEFECT : strategy2.GetAction(mem2);
+    const bool action1 = force_defect ? DEFECT : strategy1.GetAction(mem1);
+    const bool action2 = force_defect ? DEFECT : strategy2.GetAction(mem2);
     CompetitionResult result(action1, action2);
     // emp::PrintLn("Action1:", action1, "  Action2:", action2);
 
@@ -121,14 +118,8 @@ public:
     emp::BitVector mem2 = strategy2.GetStartState();
 
     for (size_t i = 0; i < num_rounds; ++i) {
-      if (hard_defect_toggle && i == hard_defect_round) {
-        CompetitionResult r = Compete(mem1, mem2, true);
-        result += r;
-      }
-      else { 
-        CompetitionResult r = Compete(mem1, mem2, false); 
-        result += r;
-      } 
+      CompetitionResult r = Compete(mem1, mem2, i == hard_defect_round);
+      result += r;
     }
     return result;
   }
@@ -144,10 +135,9 @@ public:
     SummaryStrategy strategy1,
     SummaryStrategy strategy2,
     size_t num_rounds,
-    bool hard_defect_toggle,
     size_t hard_defect_round) const
   {
-    Competition competition{strategy1, strategy2, num_rounds, hard_defect_toggle, hard_defect_round};
+    Competition competition{strategy1, strategy2, num_rounds, hard_defect_round};
     if (!result_cache.contains(competition)) {
       result_cache[competition] = competition.Run();
     }

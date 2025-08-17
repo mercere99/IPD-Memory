@@ -40,8 +40,8 @@ private:
   // const double memory_cost = 0.1;
   const double memory_cost = 0;
 
-  const bool hard_defect_toggle = false;
-  const size_t hard_defect_round = 31; // rounds are indexed starting from 0
+  const size_t hard_defect_round = emp::MAX_SIZE_T; // Hard defect will never occur
+  // const size_t hard_defect_round = 31; // rounds are indexed starting from 0
 
   const size_t max_replicates = 1;
 
@@ -111,7 +111,7 @@ public:
       // Determine # of opponents; note that we should not compete with self.
       const size_t opponent_count = org_counts[opponent_id] - (strategy_id == opponent_id);
       const double base_fitness = manager
-                                  .Compete(strategy_id, opponent_id, num_rounds, hard_defect_toggle, hard_defect_round)
+                                  .Compete(strategy_id, opponent_id, num_rounds, hard_defect_round)
                                   .CalcScore1();
       const double penalty = GetStrategy(strategy_id).GetMemorySize() * memory_cost;
       fitness +=  (base_fitness - penalty) * opponent_count;
