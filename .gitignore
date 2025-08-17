@@ -1,41 +1,32 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
+*~
+*.csv
+*.debug
+*.dSYM
+*.gcov
+*.js.mem
+*.map
+*.mp4
 *.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
 *.out
-*.app
+*.pyc
+*.swp
+*.swo
+*.wasm
+*.wast
+*-bak.cc
+*-bak.cpp
+*.dat
+*.exe
+*tmp.*
+*-bak.*
+*-bak2.*
 
-# debug information files
-*.dwo
+.DS_Store
+a.out
+a.out.js
+
+.vscode/
+
+tmp/
+**/bak/
+**/BAK/
