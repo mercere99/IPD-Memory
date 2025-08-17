@@ -2,95 +2,27 @@
 
 #include <compare>
 
-#include "../Empirical/include/emp/io/io_utils.hpp"
-#include "../Empirical/include/emp/bits/Bits.hpp"
+#include "emp/io/io_utils.hpp"
+#include "emp/bits/Bits.hpp"
 
 #include "Strategy.hpp"
 
 class CompetitionResult {
 private:
-  int score1 = 0;
-  int score2 = 0;
-
-  int total_rounds = 0;
-
-  int coop_coop_count = 0;
-  int coop_defect_count = 0;
-  int defect_coop_count = 0;
-  int defect_defect_count = 0;
-
-  int retaliation_count1 = 0; // How many times defect AFTER opponent defected
-  int aggression_count1 = 0;  // How many times defect AFTER opponent cooperated
-  int forgiveness_count1 = 0; // How many times cooperate AFTER opponent defected
-  int reciprocity_count1 = 0; // How many times cooperate AFTER opponent cooperated
-
-  int retaliation_count2 = 0; // How many times defect AFTER opponent defected
-  int aggression_count2 = 0;  // How many times defect AFTER opponent cooperated
-  int forgiveness_count2 = 0; // How many times cooperate AFTER opponent defected
-  int reciprocity_count2 = 0; // How many times cooperate AFTER opponent cooperated
-
   emp::BitVector player1_moves;
   emp::BitVector player2_moves;
 
 public:
   CompetitionResult() = default;
   CompetitionResult(const CompetitionResult &) = default;
-  CompetitionResult(const bool play1, const bool play2, const bool last1, const bool last2)
-    : total_rounds(1)
-  {
+  CompetitionResult(const bool play1, const bool play2) {
     player1_moves.push_back(play1);
     player2_moves.push_back(play2);
-
-    if (play1 == DEFECT && play2 == DEFECT) {
-      score1 = 1;
-      score2 = 1;
-      defect_defect_count = 1;
-    }
-    else if (play1 == COOPERATE && play2 == COOPERATE) {
-      score1 = 3;
-      score2 = 3;
-      coop_coop_count = 1;
-    }
-    else if (play1 == COOPERATE && play2 == DEFECT) {
-      score1 = 0;
-      score2 = 5;
-      coop_defect_count = 1;
-    }
-    else if (play1 == DEFECT && play2 == COOPERATE) {
-      score1 = 5;
-      score2 = 0;
-      defect_coop_count = 1;
-    }
-
-    if (play1 == DEFECT && last1 == DEFECT) { retaliation_count1 = 1; }
-    if (play1 == DEFECT && last1 == COOPERATE) { aggression_count1 = 1; }
-    if (play1 == COOPERATE && last1 == DEFECT) { forgiveness_count1 = 1; }
-    if (play1 == COOPERATE && last1 == COOPERATE) { reciprocity_count1 = 1; }
-
-    if (play2 == DEFECT && last2 == DEFECT) { retaliation_count2 = 1; }
-    if (play2 == DEFECT && last2 == COOPERATE) { aggression_count2 = 1; }
-    if (play2 == COOPERATE && last2 == DEFECT) { forgiveness_count2 = 1; }
-    if (play2 == COOPERATE && last2 == COOPERATE) { reciprocity_count2 = 1; }
   }
 
   CompetitionResult & operator=(const CompetitionResult &) = default;
 
   CompetitionResult & operator+=(CompetitionResult in) {
-    score1 += in.score1;
-    score2 += in.score2;
-    total_rounds += in.total_rounds;
-    coop_coop_count += in.coop_coop_count;
-    coop_defect_count += in.coop_defect_count;
-    defect_coop_count += in.defect_coop_count;
-    defect_defect_count += in.defect_defect_count;
-    retaliation_count1 += in.retaliation_count1;
-    aggression_count1 += in.aggression_count1; 
-    forgiveness_count1 += in.forgiveness_count1;
-    reciprocity_count1 += in.reciprocity_count1;
-    retaliation_count2 += in.retaliation_count2;
-    aggression_count2 += in.aggression_count2; 
-    forgiveness_count2 += in.forgiveness_count2;
-    reciprocity_count2 += in.reciprocity_count2;
     player1_moves.Append(in.player1_moves);
     player2_moves.Append(in.player2_moves);
     return *this;
@@ -101,14 +33,30 @@ public:
     return in;
   }
 
-  [[nodiscard]] int GetScore1() const { return score1; }
-  [[nodiscard]] int GetScore2() const { return score2; }
-  [[nodiscard]] int GetCooperate1() const { return forgiveness_count1 + reciprocity_count1; }
-  [[nodiscard]] int GetCooperate2() const { return forgiveness_count2 + reciprocity_count2; }
-  [[nodiscard]] int GetDefect1() const { return retaliation_count1 + aggression_count1; }
-  [[nodiscard]] int GetDefect2() const { return retaliation_count2 + aggression_count2; }
+  [[nodiscard]] size_t GetCooperate1() const { return player1_moves.CountOnes(); }
+  [[nodiscard]] size_t GetCooperate2() const { return player2_moves.CountOnes(); }
+  [[nodiscard]] size_t GetDefect1() const { return player1_moves.CountZeros(); }
+  [[nodiscard]] size_t GetDefect2() const { return player1_moves.CountZeros(); }
   [[nodiscard]] emp::BitVector GetPlayer1Moves() const { return player1_moves; }
   [[nodiscard]] emp::BitVector GetPlayer2Moves() const { return player2_moves; }
+
+  [[nodiscard]] size_t CountCoopCoop() const { return (player1_moves & player2_moves).CountOnes(); }
+  [[nodiscard]] size_t CountCoopDefect() const { return (player1_moves & ~player2_moves).CountOnes(); }
+  [[nodiscard]] size_t CountDefectCoop() const { return (~player1_moves & player2_moves).CountOnes(); }
+  [[nodiscard]] size_t CountDefectDefect() const { return (~player1_moves & ~player2_moves).CountOnes(); }
+
+  [[nodiscard]] int CalcScore1() const { return CountDefectDefect() + CountCoopCoop() * 3 + CountDefectCoop() * 5; }
+  [[nodiscard]] int CalcScore2() const { return CountDefectDefect() + CountCoopCoop() * 3 + CountCoopDefect() * 5; }
+
+  [[nodiscard]] size_t CountRetaliation1() { return ((~player1_moves << 1) & ~player2_moves).CountOnes(); }
+  [[nodiscard]] size_t CountAggression1() { return ((~player1_moves << 1) & player2_moves).CountOnes(); }
+  [[nodiscard]] size_t CountForgiveness1() { return ((player1_moves << 1) & ~player2_moves).CountOnes(); }
+  [[nodiscard]] size_t CountReciprocity1() { return ((player1_moves << 1) & player2_moves).CountOnes(); }
+
+  [[nodiscard]] size_t CountRetaliation2() { return ((~player2_moves << 1) & ~player1_moves).CountOnes(); }
+  [[nodiscard]] size_t CountAggression2() { return ((~player2_moves << 1) & player1_moves).CountOnes(); }
+  [[nodiscard]] size_t CountForgiveness2() { return ((player2_moves << 1) & ~player1_moves).CountOnes(); }
+  [[nodiscard]] size_t CountReciprocity2() { return ((player2_moves << 1) & player1_moves).CountOnes(); }
 };
 
 class Competition {
@@ -142,8 +90,8 @@ public:
     // TODO: Bug in GetAction() when memory is 0
     const bool action1 = hd_toggle ? DEFECT : strategy1.GetAction(mem1);
     const bool action2 = hd_toggle ? DEFECT : strategy2.GetAction(mem2);
-    CompetitionResult result(action1, action2, mem1[0], mem2[0]);
-    emp::PrintLn("Action1:", action1, "  Action2:", action2);
+    CompetitionResult result(action1, action2);
+    // emp::PrintLn("Action1:", action1, "  Action2:", action2);
 
     // Update Memory
     mem1.PushFront(action2);
@@ -171,10 +119,8 @@ public:
     CompetitionResult result;
     emp::BitVector mem1 = strategy1.GetStartState();
     emp::BitVector mem2 = strategy2.GetStartState();
-    emp::PrintLn("got start states successfully");
 
     for (size_t i = 0; i < num_rounds; ++i) {
-      emp::PrintLn("round ", i);
       if (hard_defect_toggle && i == hard_defect_round) {
         CompetitionResult r = Compete(mem1, mem2, true);
         result += r;
