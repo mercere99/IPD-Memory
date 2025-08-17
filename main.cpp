@@ -65,6 +65,7 @@ int main()
       emp::Random random(random_seed);
       Population test_pop = pop; // Keep the original population with base stats.
       test_pop.Run(random);
+      test_pop.ExportHistory("history" + std::to_string(random_seed));
     },
     "Add strategy with NAME DECISION_LIST STARTING_MEMORY\nSkip STARTING_MEMORY if empty.");
 
