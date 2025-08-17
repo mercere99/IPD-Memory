@@ -13,8 +13,8 @@
 
 #include <string>
 
-#include "../Empirical/include/emp/bits/Bits.hpp"
-#include "../Empirical/include/emp/math/math.hpp"
+#include "emp/bits/Bits.hpp"
+#include "emp/math/math.hpp"
 
 static constexpr bool COOPERATE = true;
 static constexpr bool DEFECT = false;
@@ -126,7 +126,6 @@ public:
   [[nodiscard]] bool GetAction(const emp::BitVector & mem) const {
     emp_assert(mem.size() == start_state.size());
     emp_assert(decision_list.size() > 0);
-    emp::PrintLn("DECISION LIST: ", decision_list);
     // If zero memory, return the only decision available
     if (mem.size() == 0) return decision_list[0]; // Something is wrong with the indexing?
     size_t num_opponent_defects = mem.CountZeros();
