@@ -275,7 +275,7 @@ public:
       fitness_file << "Generation,Best_F,Mean_F,Fittest_ID,Fittest_StartState,Fittest_DecisionList\n";
       fitness_file << std::fixed << std::setprecision(3);
 
-      for (size_t update = 0; update <= max_generations; ++update) {
+      for (size_t update = 0; update < history.size(); ++update) {
         fitness_file << update << ","
           << history[update].best_fitness << ","
           << history[update].mean_fitness << ","
@@ -290,7 +290,7 @@ public:
       count_file << "Generation,Highest_Count,Most_Common_ID,Most_Common_StartState,Most_Common_DecisionList\n";
       count_file << std::fixed << std::setprecision(3);
 
-      for (size_t update = 0; update <= max_generations; ++update) {
+      for (size_t update = 0; update < history.size(); ++update) {
         count_file << update << ","
           << history[update].highest_count << ","
           << history[update].most_common_id << ",";
@@ -304,7 +304,7 @@ public:
     if (memory_file.is_open()) {
       memory_file << "Generation,Highest_Mem,Mean_Mem,Most_Mem_ID,Most_Mem_StartState,Most_Mem_DecisionList\n";
       memory_file << std::fixed << std::setprecision(3);
-      for (size_t update = 0; update <= max_generations; ++update) {
+      for (size_t update = 0; update < history.size(); ++update) {
         memory_file << update << ","
           << history[update].highest_memory << ","
           << history[update].mean_memory << ","
