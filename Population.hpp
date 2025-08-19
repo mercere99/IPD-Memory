@@ -67,6 +67,19 @@ public:
     return total;
   }
 
+  /// How many distinct strategies are currently coexisting?
+  [[nodiscard]] size_t CountStrategies() const {
+    size_t result = 0;
+    for (size_t count : org_counts) if (count > 0) ++result;
+    return result;
+  }
+
+  // Scan through all of the strategies and return the ID of the first one in the population.
+  size_t GetFirstStrategyID() const {
+    for (size_t id = 0; id < org_counts.size(); ++id) if (org_counts[id] > 0) return id;
+    return emp::MAX_SIZE_T;
+  }
+
   // [[nodiscard]] auto & GetStrategy(this auto self, size_t strategy_id) {
   //   if (strategy_id >= self.strategy_info.size()) {
   //     // Otherwise we need to increase the number of strategies we have information about.
@@ -173,6 +186,12 @@ public:
       if (update % print_step == 0) {
         emp::PrintLn("Update ", update, ":");
         Print();
+      }
+      if (mut_prob == 0.0 && CountStrategies() == 1) {
+        size_t id = GetFirstStrategyID();
+        emp::PrintLn("Terminated at update ", update,
+          ": One strategy left (", id, ": ", strategy_info[id].GetName(), ") and no mutations.");
+        break;
       }
     }
   }
