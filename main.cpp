@@ -82,6 +82,7 @@ int main(int argc, char * argv[])
         emp::Random random(cur_seed);
         Population test_pop = pop; // Keep the original population with base stats.
         test_pop.Run(random);
+        test_pop.ExportHistory("history" + std::to_string(cur_seed));
       }
     },
     "Add strategy with NAME DECISION_LIST STARTING_MEMORY\nSkip STARTING_MEMORY if empty.");
