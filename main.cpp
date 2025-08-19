@@ -62,6 +62,7 @@ int main(int argc, char * argv[])
 
   settings.AddKeyword("Run",
     [&pop](emp::vector<emp::String> args){
+      // Determine which random seeds to use.
       if (args.size() < 1) { emp::notify::Error("Must specify random seed to use."); abort(); }
       if (!args[0].OnlyDigits()) { emp::notify::Error("Seed for a Run must be numerical."); abort(); }
       size_t start_seed = args[0].AsULL();
@@ -74,6 +75,8 @@ int main(int argc, char * argv[])
           abort();
         }
       }
+
+      // Do a separate run for each seed.
       for (size_t cur_seed = start_seed; cur_seed < end_seed; ++cur_seed) {
         emp::PrintLn("=== Starting Run with seed ", cur_seed, " ===");
         emp::Random random(cur_seed);
